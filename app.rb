@@ -9,14 +9,16 @@ def init_db
 	@db.results_as_hash = true
 end
 
-	# => before вызывается каждый раз при перезагрузке любой страницы
+# => before вызывается каждый раз при перезагрузке любой страницы
 
 before do
 	# => Инициализация БД
 	init_db
 end
-	# => configure вызывается каждый раз при конфигурвции приложения:
-	# => когда изменился код программы или\и перезагрузилась страница
+
+# => configure вызывается каждый раз при конфигурвции приложения:
+# => когда изменился код программы или\и перезагрузилась страница
+
 configure do
 	# => Инициализация БД
 	init_db
@@ -41,7 +43,7 @@ end
 # => обработчик get-запроса /new (браузер получает страницу с сервера)
 
 get '/' do
-# => выбираем список постов из БД
+	# => выбираем список постов из БД
 
 	@results = @db.execute 'select * from Posts order by id desc'
 
@@ -53,7 +55,7 @@ get '/new' do
 	erb :new
 end
 
-	# => обработчик post-запроса /new (браузер отправляет данные на сервер)
+# => обработчик post-запроса /new (браузер отправляет данные на сервер)
 
 post '/new' do
 	# => получаем переменную из post-запроса
@@ -62,10 +64,10 @@ post '/new' do
   	@error = "Type post text"
   	return erb :new
   end
-# => Сохранение данных в БД
+	# => Сохранение данных в БД
 	@db.execute 'insert into Posts (content, created_date) values (?, datetime())', [content]
 
-# => Перенаправление на главную страницу
+	# => Перенаправление на главную страницу
 
 	redirect to '/'
 
@@ -75,18 +77,18 @@ end
 
 get '/details/:post_id' do
 
-# => Получаем переменную из url'a
+	# => Получаем переменную из url'a
 	post_id = params[:post_id]
 
 
-# => Получаем список постов (у нас будет только один пост)
+	# => Получаем список постов (у нас будет только один пост)
 
 	results = @db.execute 'select * from Posts where id = ?', [post_id]
 
-# => Выбираем этот один пост в переменную @row
+	# => Выбираем этот один пост в переменную @row
 	@row = results[0]
 
-# => Возвращаем представление details.erb
+	# => Возвращаем представление details.erb
 	erb :details
 end
 
@@ -100,5 +102,21 @@ post '/details/:post_id' do
 	# => получаем переменную из post-запроса
 	content = params[:content]
 
-	erb "You typed comment #{content} for post #{post_id}"
+	# => Сохранение данных в БД
+	@db.execute 'insert into Comments
+	(
+		content,
+		created_date,
+		post_id
+	)
+		values 
+	(
+		?,
+		datetime(),
+		?
+	)', [content, post_id]
+
+	# => Перенаправление на главную страницу поста
+
+	redirect to ('/details/'+ post_id)
 end
